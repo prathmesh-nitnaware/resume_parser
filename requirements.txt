@@ -1,0 +1,7 @@
+flask
+flask_sqlalchemy
+pdfplumber
+python-docx
+spacy
+scikit-learn
+werkzeug
