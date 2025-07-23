@@ -1,0 +1,39 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <title>Upload Resumes</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial; }
+        .container { max-width: 600px; margin: auto; padding: 40px; text-align: center; }
+        textarea, input[type="file"] { width: 100%; padding: 10px; margin-top: 10px; }
+        .btn { margin-top: 15px; background: #27ae60; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .nav-btn { margin-top: 20px; background: #3498db; padding: 10px; color: white; text-decoration: none; display: inline-block; }
+        .message { color: green; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📁 Upload Resumes & Job Description</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <textarea name="jd_text" placeholder="Paste Job Description here..." rows="6" required></textarea>
+            <input type="file" name="resumes" multiple required>
+            <br>
+            <input type="submit" value="Upload & Score" class="btn">
+        </form>
+
+        <a href="/dashboard" class="nav-btn">📊 Go to Dashboard</a>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="message">
+            {% for msg in messages %}
+            <p>{{ msg }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
