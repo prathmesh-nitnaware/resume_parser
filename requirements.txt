@@ -5,4 +5,3 @@ python-docx
 spacy
 scikit-learn
 werkzeug
-gunicorn
