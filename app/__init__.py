@@ -5,11 +5,7 @@ import os
 db = SQLAlchemy()
 
 def create_app():
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(os.getcwd(), 'templates'),
-        static_folder=os.path.join(os.getcwd(), 'static')
-    )
+    app = Flask(__name__)
 
     app.config['SECRET_KEY'] = 'your-secret-key'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///resumes.db'
