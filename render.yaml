@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: resume-parser-ai
+    env: python
+    buildCommand: "./render-build.sh"
+    startCommand: "gunicorn run:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
