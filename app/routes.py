@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, flash, current_app, send_file, url_for, send_from_directory
 import os
 import csv
-from io import StringIO
+from io import BytesIO
 from werkzeug.utils import secure_filename
 from .parser import parse_pdf_resume, parse_docx_resume
 from .models import Resume
