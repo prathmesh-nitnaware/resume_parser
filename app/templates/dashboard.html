@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parser Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a202c; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+        .modal-backdrop { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 font-sans">
+    <div class="flex min-h-screen">
+        <aside class="w-64 bg-gray-800 p-6 flex-shrink-0">
+            <div class="text-2xl font-bold text-purple-400 mb-8"><i class="fas fa-brain mr-2"></i>AI Parser</div>
+            <nav>
+                <a href="{{ url_for('main.dashboard') }}" class="flex items-center p-3 my-2 bg-gray-700 rounded-lg text-white"><i class="fas fa-chart-pie mr-4 w-5"></i>Dashboard</a>
+                <a href="{{ url_for('main.index') }}" class="flex items-center p-3 my-2 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors"><i class="fas fa-upload mr-4 w-5"></i>Upload</a>
+            </nav>
+        </aside>
+        <main class="flex-1 p-8">
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">Dashboard</h1>
+                <a href="{{ url_for('main.export_csv') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-transform hover:scale-105"><i class="fas fa-file-csv mr-2"></i>Export CSV</a>
+            </header>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">📄 Job Description Matching</h2>
+                    <form action="{{ url_for('main.dashboard') }}" method="POST">
+                        <textarea name="job_description" rows="8" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-transparent focus:border-purple-500 focus:outline-none" placeholder="Paste a job description here to score and rank resumes...">{{ job_description or '' }}</textarea>
+                        <button type="submit" class="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-transform hover:scale-105">
+                            <i class="fas fa-magic mr-2"></i>Score & Rank Resumes
+                        </button>
+                    </form>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">🔍 Advanced Search</h2>
+                    <form action="{{ url_for('main.dashboard') }}" method="GET">
+                        <input type="search" name="q" value="{{ query or '' }}" placeholder="Search by name, or skills (e.g. python, flask)..." class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-transparent focus:border-purple-500 focus:outline-none">
+                        <button type="submit" class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg">Search</button>
+                    </form>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Key Metrics</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-gray-400 text-sm">Average Match Score</p>
+                            <p class="text-3xl font-bold text-purple-400">{{ average_score }}%</p>
+                            <div class="w-full bg-gray-700 rounded-full h-2.5 mt-2">
+                                <div class="bg-purple-500 h-2.5 rounded-full" style="width: {{ average_score }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm mb-2">Top Skills in this View</p>
+                            <div class="space-y-2">
+                                {% for skill, count in top_skills %}
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="font-medium capitalize">{{ skill }}</span>
+                                    <span class="text-gray-400">{{ count }} mention(s)</span>
+                                </div>
+                                {% else %}
+                                <p class="text-sm text-gray-500">No skill data to display.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+                    <div class="space-y-4">
+                        {% for resume in recent_resumes %}
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-3 flex-shrink-0">
+                                <i class="fas fa-file-alt text-purple-400"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-sm truncate">{{ resume.filename }}</p>
+                                <p class="text-xs text-gray-500">Uploaded on {{ resume.date_uploaded.strftime('%b %d, %Y') }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No recent uploads found.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h2 class="text-xl font-semibold mb-4">Ranked Resumes</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="border-b-2 border-gray-700">
+                            <tr>
+                                <th class="p-4">Name</th>
+                                <th class="p-4">Match Score</th>
+                                <th class="p-4">Skills</th>
+                                <th class="p-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resume in resumes %}
+                            <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                                <td class="p-4 flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="font-bold text-purple-400">{{ resume.name[0] | upper if resume.name }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold">{{ resume.name or 'N/A' }}</p>
+                                        <p class="text-xs text-gray-400 break-all">{{ resume.email or 'N/A' }}</p>
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                        <div class="bg-gradient-to-r from-purple-500 to-blue-500 h-2.5 rounded-full" style="width: {{ resume.score }}%"></div>
+                                    </div>
+                                    <p class="text-center text-sm font-bold mt-1">{{ resume.score }}%</p>
+                                </td>
+                                <td class="p-4">
+                                    <div class="flex flex-wrap gap-2 max-w-md">
+                                        {% for skill in resume.skills.split(',') | map('trim') | list %}
+                                            {% if skill %}
+                                            <span class="bg-gray-700 text-xs font-semibold px-2.5 py-1 rounded-full">{{ skill }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="flex space-x-4">
+                                        <button onclick="openPreviewModal('{{ url_for('main.preview_resume', filename=resume.filename) }}')" class="text-yellow-400 hover:text-yellow-300" title="Preview">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="{{ url_for('main.download_resume', filename=resume.filename) }}" class="text-blue-400 hover:text-blue-300" title="Download"><i class="fas fa-download"></i></a>
+                                        <form action="{{ url_for('main.delete_resume', id=resume.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                                            <button type="submit" class="text-red-400 hover:text-red-300" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center p-8 text-gray-500">No resumes found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden modal-backdrop z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                <h3 class="text-lg font-semibold" id="modal-title">Resume Preview</h3>
+                <button onclick="closePreviewModal()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div class="flex-1 p-2 bg-gray-900">
+                <iframe id="preview-iframe" class="w-full h-full border-0 rounded-b-lg" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+<script>
+    const modal = document.getElementById('preview-modal');
+    const iframe = document.getElementById('preview-iframe');
+    const modalTitle = document.getElementById('modal-title');
+
+    function openPreviewModal(url) {
+        modalTitle.textContent = `Previewing: ${url.split('/').pop()}`;
+        iframe.src = url;
+        modal.classList.remove('hidden');
+    }
+
+    function closePreviewModal() {
+        iframe.src = 'about:blank';
+        modal.classList.add('hidden');
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closePreviewModal();
+        }
+    });
+</script>
+</body>
+</html>

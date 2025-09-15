@@ -1,27 +1,32 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-import os
 
 db = SQLAlchemy()
 
 def create_app():
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(os.getcwd(), 'templates'),
-        static_folder=os.path.join(os.getcwd(), 'static')
-    )
+    app = Flask(__name__, instance_relative_config=True)
 
-    app.config['SECRET_KEY'] = 'your-secret-key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///resumes.db'
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
+    app.config.from_mapping(
+        SECRET_KEY=os.getenv('SECRET_KEY', 'a-very-secret-key-that-should-be-changed'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'resumes.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+
+    try:
+        os.makedirs(app.instance_path)
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    except OSError:
+        pass
 
     db.init_app(app)
 
-    from .routes import main
-    app.register_blueprint(main)
-
+    from . import routes
+    app.register_blueprint(routes.main)
+    
     with app.app_context():
-        from .models import Resume
+        from . import models
         db.create_all()
 
     return app
