@@ -9,3 +9,5 @@ scikit-learn
 PyPDF2
 python-docx
 docx2pdf
+
+gunicorn==22.0.0
